@@ -26,15 +26,15 @@ func NewLoadFile(l load_file.Service) *LoadFile {
 	}
 }
 
-func (l *LoadFile) GetLoadData() gin.HandlerFunc { // Docker Container
+func (l *LoadFile) GetLoadData() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
-		// fmt.Println("Cuerpo completo del POST:", ctx.Request.Body)
+		// fmt.Println("Cuerpo completo del POST: ", ctx.Request)
 
 		// Obtén el archivo del formulario
 		file, err := ctx.FormFile("file")
 		if err != nil {
-			web.Error(ctx, http.StatusBadRequest, "No se pudo obtener el archivo")
+			web.Error(ctx, http.StatusBadRequest, "It was not possible to get the file")
 			return
 		}
 
@@ -46,6 +46,6 @@ func (l *LoadFile) GetLoadData() gin.HandlerFunc { // Docker Container
 		}
 
 		fmt.Println("LoadFile successfully | Status 200 OK")
-		web.Success(ctx, http.StatusOK, gin.H{"message": "Archivo procesado exitosamente"})
+		web.Success(ctx, http.StatusOK, gin.H{"message": "Archive successfully processed"})
 	}
 }
