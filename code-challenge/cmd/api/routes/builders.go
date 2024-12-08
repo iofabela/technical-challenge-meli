@@ -19,7 +19,7 @@ func (r *Router) buildPing() {
 
 func (r *Router) buildLoadFileRoute() {
 
-	repo := load_file.NewRepository(r.config.EnvConfig.SQL)
+	repo := load_file.NewRepository(r.config.EnvConfig.SQL, r.config.Rest, r.config.EnvConfig.SqlService)
 	service := load_file.NewService(repo)
 	handler := handler.NewLoadFile(service)
 	loadFileRoute := r.rg.Group("/")

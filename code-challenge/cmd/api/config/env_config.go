@@ -2,7 +2,7 @@ package config
 
 import (
 	"github.com/gin-gonic/gin"
-	sql "github.com/iofabela/technical-challenge-meli/cmd/api/infrastructure/SQL"
+	internal_sql "github.com/iofabela/technical-challenge-meli/cmd/api/infrastructure/SQL"
 	"github.com/iofabela/technical-challenge-meli/cmd/api/infrastructure/rest"
 	"github.com/iofabela/technical-challenge-meli/cmd/api/models/env"
 	"github.com/iofabela/technical-challenge-meli/cmd/api/routes"
@@ -32,10 +32,11 @@ func (cfg *Config) getConfig() *routes.RouterConfig {
 
 func (cfg *Config) setConfig() (*gin.Engine, error) {
 	var err error
-	cfg.EnvConfig.SQL, err = sql.Connect(cfg.EnvConfig.DBName)
+	cfg.EnvConfig.SQL, err = internal_sql.Connect(cfg.EnvConfig.DBName) // Connect to the database
 	if err != nil {
 		panic(err)
 	}
+	cfg.EnvConfig.SqlService = internal_sql.NewSQL(cfg.EnvConfig.SQL) // Create the SQL service
 	cfg.Rest = rest.NewClient("https://api.mercadolibre.com", rest.Endpoints{
 		Items_price: "/items/",
 		Items_time:  "/items/",

@@ -12,14 +12,18 @@ import (
 	"regexp"
 
 	"github.com/gin-gonic/gin"
+	internal_sql "github.com/iofabela/technical-challenge-meli/cmd/api/infrastructure/SQL"
+	"github.com/iofabela/technical-challenge-meli/cmd/api/infrastructure/rest"
 	"github.com/iofabela/technical-challenge-meli/cmd/api/utils/web"
 )
 
 type Repository struct {
 	db         *sql.DB
+	SqlService *internal_sql.SQL
 	file       *[]byte
 	fileName   string
 	FileConfig FileConfig
+	Client     *rest.Client
 }
 
 // Configuration of the reader
@@ -34,8 +38,12 @@ type CSVReader struct {
 	Reader    *csv.Reader
 }
 
-func NewRepository(db *sql.DB) *Repository {
-	return &Repository{db: db}
+func NewRepository(db *sql.DB, client *rest.Client, sqlService *internal_sql.SQL) *Repository {
+	return &Repository{
+		db:         db,
+		Client:     client,
+		SqlService: sqlService,
+	}
 }
 
 func (r *Repository) LoadFile(ctx *gin.Context, file *multipart.FileHeader) (*multipart.FileHeader, error) {
@@ -77,6 +85,7 @@ func (r *Repository) GetConfigFile(ctx *gin.Context, uploadedFile *multipart.Fil
 		web.Error(ctx, http.StatusInternalServerError, "Error to read the file")
 		return nil, fmt.Errorf("detectFormatAndSeparator - %w", err)
 	}
+
 	// Detect the format and separator
 	fileConfig, err := r.DetectFormatAndSeparator(firstLine)
 	if err != nil {
@@ -84,8 +93,8 @@ func (r *Repository) GetConfigFile(ctx *gin.Context, uploadedFile *multipart.Fil
 		return nil, fmt.Errorf("repository.loadFile - %w", err)
 	}
 
-	fmt.Println("Format detected: ", fileConfig.Format)
-	fmt.Println("Separator detected: ", string(fileConfig.Separator))
+	fmt.Println("Format detected: ", fileConfig.Format)               // TODO remove
+	fmt.Println("Separator detected: ", string(fileConfig.Separator)) // TODO remove
 	r.FileConfig = fileConfig
 	return scanner, nil
 }
@@ -93,7 +102,7 @@ func (r *Repository) GetConfigFile(ctx *gin.Context, uploadedFile *multipart.Fil
 // Detect automatically the format and separator using regex
 func (r *Repository) DetectFormatAndSeparator(firstLine string) (FileConfig, error) {
 
-	fmt.Println("Primera línea del archivo: ", firstLine)
+	fmt.Println("First line of the file: ", firstLine) // TODO remove
 
 	// Regex for JSON Lines (looks for common separators: { } , ; | \t)
 	jsonRegex := regexp.MustCompile(`^\s*{\s*.*\s*}$`)

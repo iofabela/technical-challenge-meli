@@ -10,6 +10,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/iofabela/technical-challenge-meli/cmd/api/infrastructure/rest"
+	"github.com/iofabela/technical-challenge-meli/cmd/api/models/items"
 	"github.com/iofabela/technical-challenge-meli/cmd/api/utils/web"
 )
 
@@ -55,7 +57,7 @@ func (r *Repository) JSONLinesReader(ctx *gin.Context, file *bufio.Scanner) erro
 		line := file.Text()
 		if err := r.ProcessJson(line); err != nil && err != io.EOF {
 			//TODO save the line with error in a file
-			web.Error(ctx, http.StatusInternalServerError, "Error to read process line")
+			web.Error(ctx, http.StatusInternalServerError, "Error to read process line ")
 			return fmt.Errorf("Error to read process line: %w", err)
 		}
 	}
@@ -65,18 +67,39 @@ func (r *Repository) JSONLinesReader(ctx *gin.Context, file *bufio.Scanner) erro
 
 func (r *Repository) ProcessLine(line string) error {
 	fmt.Println("Line:", strings.ReplaceAll(line, string(r.FileConfig.Separator), ""))
+	dataLine := strings.Split(line, string(r.FileConfig.Separator))
+	item, err := rest.RestMeli_Items(dataLine[0], dataLine[1], r.Client) // TODO get fields of site and id
+	if err != nil {
+		return err
+	}
+	fmt.Println("Item: ", item)
+	// err = r.SqlService.SaveItem(item)
+	// if err != nil {
+	// 	return err
+	// }
 	return nil
 }
 
 func (r *Repository) ProcessJson(line string) error {
-	var obj struct {
-		Site string `json:"site"`
-		ID   int    `json:"id"`
+	var obj items.DataLine
+	if err := json.Unmarshal([]byte(line), &obj); err != nil { // Process the JSON line
+		return fmt.Errorf("Error to unmarshal JSON: %s", err.Error())
+	}
+	fmt.Println("JSON Line Object: ", obj)
+	item, err := rest.RestMeli_Items(obj.Site, strconv.Itoa(obj.ID), r.Client)
+	if err != nil {
+		return err
 	}
 
-	if err := json.Unmarshal([]byte(line), &obj); err != nil { // Process the JSON line
-		return fmt.Errorf("Error to unmarshal JSON: %w", err)
-	}
-	fmt.Println("JSON Line Object: ", obj.Site+strconv.Itoa(obj.ID))
+	fmt.Println("Item: ", obj.Site, strconv.Itoa(obj.ID), item)
+	// err = r.SqlService.SaveItem(item)
+	// if err != nil {
+	// 	return err
+	// }
+	return nil
+}
+
+func Reprocess(id string) error { // Reprocess the item if fail
+	// Save in a file
 	return nil
 }

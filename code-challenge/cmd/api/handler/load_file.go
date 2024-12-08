@@ -29,16 +29,13 @@ func NewLoadFile(l load_file.Service) *LoadFile {
 func (l *LoadFile) GetLoadData() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
-		// fmt.Println("Cuerpo completo del POST: ", ctx.Request)
-
-		// Obtén el archivo del formulario
+		// Get the file from the form
 		file, err := ctx.FormFile("file")
 		if err != nil {
 			web.Error(ctx, http.StatusBadRequest, "It was not possible to get the file")
 			return
 		}
-
-		// Carga el archivo en la base de datos
+		// Load the file in the database
 		_, err = l.loadFileService.LoadFile(ctx, file)
 		if err != nil {
 			fmt.Printf("handler.%s - %v\n", ctx.Request.URL.Path, err)
