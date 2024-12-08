@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/iofabela/technical-challenge-meli/cmd/api/infrastructure/rest"
 	"github.com/iofabela/technical-challenge-meli/cmd/api/models/env"
 )
 
@@ -16,6 +17,7 @@ type RouterConfig struct {
 	GinMode   string
 	Scope     string
 	EnvConfig env.EnviromentConfig
+	Rest      *rest.Client
 }
 
 func NewRouter(r *gin.Engine, config *RouterConfig) *Router {

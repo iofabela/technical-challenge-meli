@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/gin-gonic/gin"
 	sql "github.com/iofabela/technical-challenge-meli/cmd/api/infrastructure/SQL"
+	"github.com/iofabela/technical-challenge-meli/cmd/api/infrastructure/rest"
 	"github.com/iofabela/technical-challenge-meli/cmd/api/models/env"
 	"github.com/iofabela/technical-challenge-meli/cmd/api/routes"
 )
@@ -12,6 +13,7 @@ type Config struct {
 	GinMode   string
 	Scope     string
 	EnvConfig env.EnviromentConfig
+	Rest      *rest.Client
 }
 
 func NewConfig() *Config {
@@ -34,6 +36,13 @@ func (cfg *Config) setConfig() (*gin.Engine, error) {
 	if err != nil {
 		panic(err)
 	}
+	cfg.Rest = rest.NewClient("https://api.mercadolibre.com", rest.Endpoints{
+		Items_price: "/items/",
+		Items_time:  "/items/",
+		Categories:  "/categories/",
+		Currencies:  "/currencies/",
+		Sellers:     "/users/",
+	})
 
 	// Engine instance - router
 	gin.SetMode(gin.DebugMode)

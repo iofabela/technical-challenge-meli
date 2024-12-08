@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/csv"
-	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -17,9 +16,10 @@ import (
 )
 
 type Repository struct {
-	db       *sql.DB
-	file     *[]byte
-	fileName string
+	db         *sql.DB
+	file       *[]byte
+	fileName   string
+	FileConfig FileConfig
 }
 
 // Configuration of the reader
@@ -48,8 +48,23 @@ func (r *Repository) LoadFile(ctx *gin.Context, file *multipart.FileHeader) (*mu
 	}
 	defer uploadedFile.Close()
 
+	// Get the config file
+	scanner, err := r.GetConfigFile(ctx, &uploadedFile)
+	if err != nil {
+		return nil, fmt.Errorf("repository.loadFile - %w", err)
+	}
+
+	// Process the file
+	if err := r.ProcessFile(ctx, scanner); err != nil {
+		return nil, fmt.Errorf("repository.loadFile - %w", err)
+	}
+
+	return file, nil
+}
+
+func (r *Repository) GetConfigFile(ctx *gin.Context, uploadedFile *multipart.File) (*bufio.Scanner, error) {
 	var buf bytes.Buffer
-	bufReader := io.TeeReader(uploadedFile, &buf)
+	bufReader := io.TeeReader(*uploadedFile, &buf)
 
 	// Read the first line of the file
 	var firstLine string
@@ -63,7 +78,7 @@ func (r *Repository) LoadFile(ctx *gin.Context, file *multipart.FileHeader) (*mu
 		return nil, fmt.Errorf("detectFormatAndSeparator - %w", err)
 	}
 	// Detect the format and separator
-	fileConfig, err := detectFormatAndSeparator(firstLine)
+	fileConfig, err := r.DetectFormatAndSeparator(firstLine)
 	if err != nil {
 		web.Error(ctx, http.StatusInternalServerError, "Error to detect the file format")
 		return nil, fmt.Errorf("repository.loadFile - %w", err)
@@ -71,17 +86,12 @@ func (r *Repository) LoadFile(ctx *gin.Context, file *multipart.FileHeader) (*mu
 
 	fmt.Println("Format detected: ", fileConfig.Format)
 	fmt.Println("Separator detected: ", string(fileConfig.Separator))
-
-	// Process the file
-	if err := r.ProcessFile(ctx, fileConfig, scanner); err != nil {
-		return nil, fmt.Errorf("repository.loadFile - %w", err)
-	}
-
-	return file, nil
+	r.FileConfig = fileConfig
+	return scanner, nil
 }
 
 // Detect automatically the format and separator using regex
-func detectFormatAndSeparator(firstLine string) (FileConfig, error) {
+func (r *Repository) DetectFormatAndSeparator(firstLine string) (FileConfig, error) {
 
 	fmt.Println("Primera línea del archivo: ", firstLine)
 
@@ -106,104 +116,4 @@ func detectFormatAndSeparator(firstLine string) (FileConfig, error) {
 	}
 
 	return FileConfig{}, fmt.Errorf("detectFormatAndSeparator - It was not possible to determine the file format")
-}
-
-func (r *Repository) ProcessFile(ctx *gin.Context, config FileConfig, file *bufio.Scanner) error {
-	switch config.Format {
-	case "csv":
-		return r.CSVReader(ctx, file)
-	case "jsonlines":
-		return r.JSONLinesReader(ctx, file)
-	case "txt":
-		return r.TXTReader(ctx, file)
-	default:
-		return fmt.Errorf("NewFileReader - format not supported: %s", config.Format)
-	}
-}
-
-// Process the file content as CSV
-func (r *Repository) CSVReader(ctx *gin.Context, file *bufio.Scanner) error {
-	// csvReader := csv.NewReader(*file)
-	// rowCount := 1
-	// for {
-	// 	row, err := csvReader.Read()
-	// 	if err != nil {
-	// 		if err.Error() == "EOF" { // End of file
-	// 			break
-	// 		}
-	// 		web.Error(ctx, http.StatusBadRequest, "Error al procesar el archivo CSV")
-	// 		return fmt.Errorf("repository.loadFile - %w", err)
-	// 	}
-
-	// 	// Process each line (here only print)
-	// 	fmt.Printf("Row %d: %v\n", rowCount, row)
-	// 	rowCount++
-	// }
-
-	for file.Scan() {
-		line := file.Text()
-		if err := Read(line); err != nil && err != io.EOF {
-			web.Error(ctx, http.StatusInternalServerError, "Error to read process line")
-			return fmt.Errorf("Error to read process line: %w", err)
-		}
-	}
-	return nil
-}
-
-func (r *Repository) TXTReader(ctx *gin.Context, file *bufio.Scanner) error {
-	// csvReader := csv.NewReader(*file)
-	// rowCount := 0
-	// for {
-	// 	row, err := csvReader.Read()
-	// 	if err != nil {
-	// 		if err.Error() == "EOF" { // End of file
-	// 			break
-	// 		}
-	// 		web.Error(ctx, http.StatusBadRequest, "Error al procesar el archivo TXT")
-	// 		return fmt.Errorf("repository.loadFile - %w", err)
-	// 	}
-
-	// 	// Process each line (here only print)
-	// 	fmt.Printf("Fila %d: %v\n", rowCount, row)
-	// 	rowCount++
-	// }
-
-	for file.Scan() {
-		line := file.Text()
-		if err := Read(line); err != nil && err != io.EOF {
-			web.Error(ctx, http.StatusInternalServerError, "Error to read process line")
-			return fmt.Errorf("Error to read process line: %w", err)
-		}
-	}
-	return nil
-}
-func (r *Repository) JSONLinesReader(ctx *gin.Context, file *bufio.Scanner) error {
-
-	for file.Scan() {
-		line := file.Text()
-		if err := ReadJson(line); err != nil && err != io.EOF {
-			web.Error(ctx, http.StatusInternalServerError, "Error to read process line")
-			return fmt.Errorf("Error to read process line: %w", err)
-		}
-	}
-
-	return nil
-}
-
-func Read(line string) error {
-	fmt.Println("Line:", line)
-	return nil
-}
-
-func ReadJson(line string) error {
-	var obj struct {
-		Site string `json:"site"`
-		ID   int    `json:"id"`
-	}
-	err := json.Unmarshal([]byte(line), &obj) // Process the JSON line
-	if err != nil {
-		return fmt.Errorf("Error to unmarshal JSON: %w", err)
-	}
-	fmt.Println("JSON Line Object: ", obj)
-	return nil
 }
