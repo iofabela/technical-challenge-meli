@@ -2,6 +2,7 @@ package internal_sql
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/iofabela/technical-challenge-meli/cmd/api/models/items"
 	_ "github.com/mattn/go-sqlite3"
@@ -22,15 +23,36 @@ func Connect(database string) (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+	createTable := `
+	CREATE TABLE IF NOT EXISTS items (
+		id STRING NOT NULL,
+		site TEXT NOT NULL,
+		price LONG NOT NULL,
+		start_time TEXT NOT NULL,
+		name TEXT NOT NULL,
+		description TEXT NOT NULL,
+		nickname TEXT NOT NULL
+	);`
+	_, err = db.Exec(createTable)
+	if err != nil {
+		return nil, fmt.Errorf("sql.Connect - Error to create table: %s", err.Error())
+	}
+
 	err = db.Ping()
+	if err != nil {
+		return nil, fmt.Errorf("sql.Connect - Error to ping database: %s", err.Error())
+	}
 
 	return db, err
 }
 
 func (s *SQL) SaveItem(item *items.SaveItem) error {
-	_, err := s.DB.Exec("INSERT INTO items (site_id, id, start_time, name, description, nickname) VALUES (?, ?, ?, ?, ?, ?)", item.SiteID, item.ID, item.StartTime, item.Name, item.Description, item.Nickname)
+
+	_, err := s.DB.
+		Exec("INSERT INTO items ( id, site, price, start_time, name, description, nickname) VALUES (?, ?, ?, ?, ?, ?, ?)",
+			item.ID, item.SiteID, item.Price, item.StartTime, item.Name, item.Description, item.Nickname)
 	if err != nil {
-		return err
+		return fmt.Errorf("sql.SaveItem - Error to save item: %s", err.Error())
 	}
 	return nil
 }

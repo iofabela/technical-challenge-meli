@@ -65,13 +65,13 @@ func (r *Repository) processCSV(ctx *gin.Context, file multipart.File) error {
 	if err != nil {
 		return fmt.Errorf("error reading CSV header: %v", err)
 	}
-
+	// Detect the format and separator
 	_, err = r.DetectFormatAndSeparator(strings.Join(firstLine, ","))
 	if err != nil {
 		return fmt.Errorf("error detecting CSV format: %v", err)
 	}
 
-	for {
+	for { // Read the file line by line
 		sliceLine, err := reader.Read()
 		if err != nil {
 			if err.Error() == "EOF" {
@@ -81,16 +81,11 @@ func (r *Repository) processCSV(ctx *gin.Context, file multipart.File) error {
 			return fmt.Errorf("Error to read process line: %w", err) // TODO save the line with error in a file
 		}
 		line := strings.Join(sliceLine, ",")
-		err = r.ProcessLine(line)
-		if err != nil { // TODO save the line with error in a file
-			web.Error(ctx, http.StatusInternalServerError, "Error to read process line")
-			return fmt.Errorf("Error to read process line: %w", err)
+
+		if err = r.ProcessLine(line); err != nil { // TODO save the line with error in a file
+			web.Error(ctx, http.StatusInternalServerError, "Error to read process line in CSV")
+			return fmt.Errorf("processFile.CSV - Internal error to read process line: %s", err.Error())
 		}
-		// fmt.Println(line) // Cada línea como un slice de strings
-		// if err := r.ProcessLine(line); err != nil && err != io.EOF {
-		// 	web.Error(ctx, http.StatusInternalServerError, "Error to read process line")
-		// 	return fmt.Errorf("Error to read process line: %w", err)
-		// }
 	}
 	return nil
 }
@@ -101,29 +96,28 @@ func (r *Repository) processTXT(ctx *gin.Context, file *bufio.Scanner) error {
 	if file.Scan() { // If the first line exists
 		firstLine = file.Text()
 	}
-
+	// Detect the format and separator
 	_, err := r.DetectFormatAndSeparator(firstLine)
 	if err != nil {
 		return fmt.Errorf("error detecting CSV format: %v", err)
 	}
 
-	for file.Scan() {
+	for file.Scan() { // Read the file line by line
 		line := file.Text()
 		if err := r.ProcessLine(line); err != nil && err != io.EOF {
-			web.Error(ctx, http.StatusInternalServerError, "Error to read process line")
-			return fmt.Errorf("Error to read process line: %w", err)
+			web.Error(ctx, http.StatusInternalServerError, "Error to read process line in TXT")
+			return fmt.Errorf("processFile.TXT - Internal error to read process line: %s", err.Error())
 		}
 	}
 	return nil
 }
 func (r *Repository) processJSONLiner(ctx *gin.Context, file *bufio.Scanner) error {
 
-	for file.Scan() {
+	for file.Scan() { // Read the file line by line
 		line := file.Text()
 		if err := r.ProcessJson(line); err != nil && err != io.EOF {
-			//TODO save the line with error in a file
-			web.Error(ctx, http.StatusInternalServerError, "Error to read process line ")
-			return fmt.Errorf("Error to read process line: %w", err)
+			web.Error(ctx, http.StatusInternalServerError, "Error to read process line in JSON")
+			return fmt.Errorf("processFile.JSON - Internal error to read process line: %s", err.Error())
 		}
 	}
 
@@ -131,19 +125,19 @@ func (r *Repository) processJSONLiner(ctx *gin.Context, file *bufio.Scanner) err
 }
 
 func (r *Repository) ProcessLine(line string) error {
-	fmt.Println("Line:", line)
-	fmt.Println("Len: ", len(line))
+	fmt.Println("Line:", line) // TODO remove
 
 	dataLine := strings.Split(line, string(r.FileConfig.Separator))
 	item, err := rest.RestMeli_Items(dataLine[0], dataLine[1], r.Client) // TODO get fields of site and id
 	if err != nil {
+		//TODO save the line with error in a file
 		return err
 	}
-	fmt.Println("Item: ", item)
-	// err = r.SqlService.SaveItem(item)
-	// if err != nil {
-	// 	return err
-	// }
+	fmt.Println("Item: ", item) // TODO remove
+	err = r.SqlService.SaveItem(item)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -152,17 +146,18 @@ func (r *Repository) ProcessJson(line string) error {
 	if err := json.Unmarshal([]byte(line), &obj); err != nil { // Process the JSON line
 		return fmt.Errorf("Error to unmarshal JSON: %s", err.Error())
 	}
-	fmt.Println("JSON Line Object: ", obj)
+	fmt.Println("JSON Line Object: ", obj) // TODO remove
 	item, err := rest.RestMeli_Items(obj.Site, strconv.Itoa(obj.ID), r.Client)
 	if err != nil {
+		//TODO save the line with error in a file
 		return err
 	}
 
 	fmt.Println("Item: ", obj.Site, strconv.Itoa(obj.ID), item)
-	// err = r.SqlService.SaveItem(item)
-	// if err != nil {
-	// 	return err
-	// }
+	err = r.SqlService.SaveItem(item)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

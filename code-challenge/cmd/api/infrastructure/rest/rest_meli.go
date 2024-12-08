@@ -106,6 +106,8 @@ func RestMeli_Items(site string, id string, client *Client) (*items.SaveItem, er
 		return nil, fmt.Errorf("RestMeli_Items - Seller:Error parsing JSON: %v", err.Error())
 	}
 	return &items.SaveItem{
+		ID:          id,
+		SiteID:      site,
 		Price:       item.Price,
 		StartTime:   item.StartTime,
 		Name:        category.Name,

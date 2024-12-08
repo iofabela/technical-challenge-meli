@@ -22,7 +22,7 @@ func NewConfig() *Config {
 		GinMode: "debug",
 		Scope:   "local",
 		EnvConfig: env.EnviromentConfig{
-			DBName: "app.db",
+			DBName: "items.db",
 		},
 	}
 }
