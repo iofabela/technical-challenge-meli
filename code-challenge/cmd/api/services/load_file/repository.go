@@ -56,14 +56,18 @@ func (r *Repository) LoadFile(ctx *gin.Context, file *multipart.FileHeader) (*mu
 	}
 	defer uploadedFile.Close()
 
-	// Get the config file
-	scanner, err := r.GetConfigFile(ctx, &uploadedFile)
-	if err != nil {
-		return nil, fmt.Errorf("repository.loadFile - %w", err)
+	// Get the scanner
+	scanner := bufio.NewScanner(uploadedFile)
+
+	// Detect the file type
+	fileType := r.DetectFileType(file.Filename)
+	if fileType == "unknown" {
+		web.Error(ctx, http.StatusInternalServerError, "It was not possible to detect the file type")
+		return nil, fmt.Errorf("repository.loadFile - %s", fileType)
 	}
 
 	// Process the file
-	if err := r.ProcessFile(ctx, scanner); err != nil {
+	if err := r.ProcessFile(ctx, &uploadedFile, fileType, scanner); err != nil {
 		return nil, fmt.Errorf("repository.loadFile - %w", err)
 	}
 
@@ -100,7 +104,7 @@ func (r *Repository) GetConfigFile(ctx *gin.Context, uploadedFile *multipart.Fil
 }
 
 // Detect automatically the format and separator using regex
-func (r *Repository) DetectFormatAndSeparator(firstLine string) (FileConfig, error) {
+func (r *Repository) DetectFormatAndSeparator(firstLine string) (FileConfig, error) { // TODO remove
 
 	fmt.Println("First line of the file: ", firstLine) // TODO remove
 
@@ -110,17 +114,32 @@ func (r *Repository) DetectFormatAndSeparator(firstLine string) (FileConfig, err
 	// Regex for CSV (looks for common separators: , ; | \t)
 	csvRegex := regexp.MustCompile(`^.*([,;|\t]).*`)
 
+	// Regex for TXT (looks for common separators: , ; | \t)
+	txtRegex := regexp.MustCompile(`^.*([,;|\t]).*`)
+
 	// Format detection
 	if jsonRegex.MatchString(firstLine) {
+		r.FileConfig = FileConfig{Format: "jsonlines", Separator: 0}
+		fmt.Print("JSON Separator: {}")
 		return FileConfig{Format: "jsonlines", Separator: 0}, nil
 	} else if csvRegex.MatchString(firstLine) {
 		// Detect separator most likely in CSV
 		match := csvRegex.FindStringSubmatch(firstLine)
 		if len(match) > 1 {
 			separator := rune(match[1][0])
+			r.FileConfig = FileConfig{Format: "csv", Separator: separator}
+			fmt.Println("CSV Separator: ", string(separator))
 			return FileConfig{Format: "csv", Separator: separator}, nil
 		}
-	} else {
+	} else { // TODO match separator in TXT
+		r.FileConfig = FileConfig{Format: "txt", Separator: 0}
+		match := txtRegex.FindStringSubmatch(firstLine)
+		if len(match) > 1 {
+			separator := rune(match[1][0])
+			r.FileConfig = FileConfig{Format: "txt", Separator: separator}
+			fmt.Println("TXT Separator: ", string(separator))
+			return FileConfig{Format: "txt", Separator: separator}, nil
+		}
 		return FileConfig{Format: "txt", Separator: 0}, nil
 	}
 
