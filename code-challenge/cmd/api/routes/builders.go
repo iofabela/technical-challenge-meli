@@ -3,12 +3,13 @@ package routes
 import (
 	"net/http"
 
+	_ "github.com/iofabela/technical-challenge-meli/docs"
+
 	"github.com/gin-gonic/gin"
 	"github.com/iofabela/technical-challenge-meli/cmd/api/handler"
 	"github.com/iofabela/technical-challenge-meli/cmd/api/services/load_file"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"github.com/swaggo/swag/example/basic/docs"
 )
 
 func (r *Router) setGroup() {
@@ -33,6 +34,6 @@ func (r *Router) buildLoadFileRoute() {
 
 func (r *Router) buildSwaggerRoutes() {
 	// docs.SwaggerInfo.Host = "localhost:8080"
-	docs.SwaggerInfo.BasePath = "/api/v1"
-	r.rg.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	// docs.SwaggerInfo.BasePath = "/"
+	r.r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 }

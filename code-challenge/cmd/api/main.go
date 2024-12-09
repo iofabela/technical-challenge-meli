@@ -13,7 +13,6 @@ import "github.com/iofabela/technical-challenge-meli/cmd/api/app"
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
 // @host localhost:8080
-// @BasePath /api/v1
 
 // @schemes http https
 // @version 1.0.0

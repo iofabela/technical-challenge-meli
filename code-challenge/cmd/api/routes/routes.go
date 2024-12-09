@@ -34,4 +34,5 @@ func (r *Router) MapRoutes() {
 	// Build routes
 	r.buildPing()
 	r.buildLoadFileRoute()
+	r.buildSwaggerRoutes()
 }

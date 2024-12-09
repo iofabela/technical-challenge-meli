@@ -7,5 +7,5 @@ init-docsify:
 .PHONY: swagger
 swagger:
 	@swag init -g cmd/api/main.go
-	@rm -f docs/specs/swagger.yaml
-	@curl -X POST "https://converter.swagger.io/api/convert" -H "Accept:application/yaml" -H "Content-Type:application/yaml" --data-binary @docs/swagger.yaml >> docs/specs/swagger.yaml
+	@rm -f docs/guide/swagger.yaml
+	@curl -X POST "https://converter.swagger.io/api/convert" -H "Accept:application/yaml" -H "Content-Type:application/yaml" --data-binary @docs/swagger.yaml >> docs/guide/swagger.yaml
