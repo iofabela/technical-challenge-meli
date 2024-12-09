@@ -28,8 +28,8 @@ type Sellers struct {
 }
 
 type SaveItem struct {
-	ID          string  `json:"id"`
 	SiteID      string  `json:"site"`
+	ID          string  `json:"id"`
 	Price       float64 `json:"price"`
 	StartTime   string  `json:"start_time"`
 	Name        string  `json:"name"`

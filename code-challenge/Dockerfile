@@ -1,21 +1,21 @@
 # Go imagen base
 FROM golang:1.21
 
-# Establece el directorio de trabajo dentro del contenedor
+# Stablish the working directory inside the container
 WORKDIR /app
 
-# Copia los archivos necesarios al contenedor
+# Copy the files needed for the build
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copia todo el contenido del proyecto al contenedor
+# Copy the entire project to the container
 COPY . .
 
-# Construye el binario de la aplicación
+# Build the application binary
 RUN go build -o /main ./cmd/api
 
-# Exponer el puerto en el que correrá la aplicación
+# Expose the port on which the application will run
 EXPOSE 8080
 
-# Comando para ejecutar la aplicación
+# Command to run the applicationß
 CMD ["/main"]

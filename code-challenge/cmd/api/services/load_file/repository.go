@@ -70,7 +70,7 @@ func (r *Repository) LoadFile(ctx *gin.Context, file *multipart.FileHeader) (*mu
 	if err := r.ProcessFile(ctx, &uploadedFile, fileType, scanner); err != nil {
 		return nil, fmt.Errorf("repository.loadFile - %w", err)
 	}
-
+	fmt.Println("Total failed items: ", len(ToReprocess))
 	return file, nil
 }
 
@@ -104,9 +104,7 @@ func (r *Repository) GetConfigFile(ctx *gin.Context, uploadedFile *multipart.Fil
 }
 
 // Detect automatically the format and separator using regex
-func (r *Repository) DetectFormatAndSeparator(firstLine string) (FileConfig, error) { // TODO remove
-
-	fmt.Println("First line of the file: ", firstLine) // TODO remove
+func (r *Repository) DetectFormatAndSeparator(firstLine string) (FileConfig, error) {
 
 	// Regex for JSON Lines (looks for common separators: { } , ; | \t)
 	jsonRegex := regexp.MustCompile(`^\s*{\s*.*\s*}$`)
@@ -131,7 +129,7 @@ func (r *Repository) DetectFormatAndSeparator(firstLine string) (FileConfig, err
 			fmt.Println("CSV Separator: ", string(separator))
 			return FileConfig{Format: "csv", Separator: separator}, nil
 		}
-	} else { // TODO match separator in TXT
+	} else {
 		r.FileConfig = FileConfig{Format: "txt", Separator: 0}
 		match := txtRegex.FindStringSubmatch(firstLine)
 		if len(match) > 1 {

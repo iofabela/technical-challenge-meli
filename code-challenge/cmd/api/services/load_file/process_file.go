@@ -82,9 +82,13 @@ func (r *Repository) processCSV(ctx *gin.Context, file multipart.File) error {
 		}
 		line := strings.Join(sliceLine, ",")
 
-		if err = r.ProcessLine(line); err != nil { // TODO save the line with error in a file
-			web.Error(ctx, http.StatusInternalServerError, "Error to read process line in CSV")
-			return fmt.Errorf("processFile.CSV - Internal error to read process line: %s", err.Error())
+		if itemFailed := r.ProcessLine(line); itemFailed.Error != nil { // TODO save the line with error in a file
+
+			if r.isCriticalError(itemFailed.Error) {
+				web.Error(ctx, http.StatusInternalServerError, "Error to read process line in CSV")
+				return fmt.Errorf("processFile.CSV - Internal error to read process line: %s", itemFailed.Error.Error())
+			}
+			Reprocess(itemFailed)
 		}
 	}
 	return nil
@@ -99,14 +103,18 @@ func (r *Repository) processTXT(ctx *gin.Context, file *bufio.Scanner) error {
 	// Detect the format and separator
 	_, err := r.DetectFormatAndSeparator(firstLine)
 	if err != nil {
-		return fmt.Errorf("error detecting CSV format: %v", err)
+		return fmt.Errorf("error detecting TXT format: %v", err)
 	}
 
 	for file.Scan() { // Read the file line by line
 		line := file.Text()
-		if err := r.ProcessLine(line); err != nil && err != io.EOF {
-			web.Error(ctx, http.StatusInternalServerError, "Error to read process line in TXT")
-			return fmt.Errorf("processFile.TXT - Internal error to read process line: %s", err.Error())
+		if itemFailed := r.ProcessLine(line); itemFailed.Error != nil && itemFailed.Error != io.EOF {
+
+			if r.isCriticalError(itemFailed.Error) {
+				web.Error(ctx, http.StatusInternalServerError, "Error to read process line in TXT")
+				return fmt.Errorf("processFile.TXT - Internal error to read process line: %s", itemFailed.Error.Error())
+			}
+			Reprocess(itemFailed)
 		}
 	}
 	return nil
@@ -115,53 +123,67 @@ func (r *Repository) processJSONLiner(ctx *gin.Context, file *bufio.Scanner) err
 
 	for file.Scan() { // Read the file line by line
 		line := file.Text()
-		if err := r.ProcessJson(line); err != nil && err != io.EOF {
-			web.Error(ctx, http.StatusInternalServerError, "Error to read process line in JSON")
-			return fmt.Errorf("processFile.JSON - Internal error to read process line: %s", err.Error())
+		if itemFailed := r.ProcessJson(line); itemFailed.Error != nil && itemFailed.Error != io.EOF {
+			if r.isCriticalError(itemFailed.Error) {
+				web.Error(ctx, http.StatusInternalServerError, "Error to read process line in JSON")
+				return fmt.Errorf("processFile.JSON - Internal error to read process line: %s", itemFailed.Error.Error())
+			}
+			Reprocess(itemFailed)
 		}
 	}
 
 	return nil
 }
 
-func (r *Repository) ProcessLine(line string) error {
-	fmt.Println("Line:", line) // TODO remove
+func (r *Repository) ProcessLine(line string) *items.FailedItem {
 
 	dataLine := strings.Split(line, string(r.FileConfig.Separator))
-	item, err := rest.RestMeli_Items(dataLine[0], dataLine[1], r.Client) // TODO get fields of site and id
+	item, failedItem := rest.RestMeli_Items(dataLine[0], dataLine[1], r.Client)
+	if failedItem.Error != nil {
+		return failedItem
+	}
+	err := r.SqlService.SaveItem(item)
 	if err != nil {
-		//TODO save the line with error in a file
-		return err
+		return &items.FailedItem{
+			ID:    item.ID,
+			Site:  item.SiteID,
+			Error: err,
+		}
 	}
 	fmt.Println("Item: ", item) // TODO remove
-	err = r.SqlService.SaveItem(item)
-	if err != nil {
-		return err
-	}
-	return nil
+	return &items.FailedItem{}
 }
 
-func (r *Repository) ProcessJson(line string) error {
+func (r *Repository) ProcessJson(line string) *items.FailedItem {
 	var obj items.DataLine
 	if err := json.Unmarshal([]byte(line), &obj); err != nil { // Process the JSON line
-		return fmt.Errorf("Error to unmarshal JSON: %s", err.Error())
+		return &items.FailedItem{Error: err}
 	}
-	fmt.Println("JSON Line Object: ", obj) // TODO remove
-	item, err := rest.RestMeli_Items(obj.Site, strconv.Itoa(obj.ID), r.Client)
-	if err != nil {
-		//TODO save the line with error in a file
-		return err
+
+	item, failedItem := rest.RestMeli_Items(obj.Site, strconv.Itoa(obj.ID), r.Client)
+	if failedItem.Error != nil {
+		return failedItem
 	}
 
 	fmt.Println("Item: ", obj.Site, strconv.Itoa(obj.ID), item)
-	err = r.SqlService.SaveItem(item)
+	err := r.SqlService.SaveItem(item)
 	if err != nil {
-		return err
+		return &items.FailedItem{
+			ID:    item.ID,
+			Site:  item.SiteID,
+			Error: err,
+		}
 	}
-	return nil
+
+	fmt.Println("Item: ", item) // TODO remove
+	return &items.FailedItem{}
 }
 
-func Reprocess(id string) error { // Reprocess the item if fail
-	// Save in a file
-	return nil
+func (r *Repository) isCriticalError(err error) bool {
+	if err == nil {
+		return false
+	}
+	errorMessage := err.Error()
+	return strings.Contains(errorMessage, "datatype mismatch") ||
+		strings.Contains(errorMessage, "Error to save save item")
 }
