@@ -120,7 +120,7 @@ func (r *Repository) DetectFormatAndSeparator(firstLine string) (FileConfig, err
 		r.FileConfig = FileConfig{Format: "jsonlines", Separator: 0}
 		fmt.Print("JSON Separator: {}")
 		return FileConfig{Format: "jsonlines", Separator: 0}, nil
-	} else if csvRegex.MatchString(firstLine) {
+	} else if csvRegex.MatchString(firstLine) || r.FileConfig.Format == "csv" {
 		// Detect separator most likely in CSV
 		match := csvRegex.FindStringSubmatch(firstLine)
 		if len(match) > 1 {
@@ -129,8 +129,7 @@ func (r *Repository) DetectFormatAndSeparator(firstLine string) (FileConfig, err
 			fmt.Println("CSV Separator: ", string(separator))
 			return FileConfig{Format: "csv", Separator: separator}, nil
 		}
-	} else {
-		r.FileConfig = FileConfig{Format: "txt", Separator: 0}
+	} else if txtRegex.MatchString(firstLine) || r.FileConfig.Format == "txt" {
 		match := txtRegex.FindStringSubmatch(firstLine)
 		if len(match) > 1 {
 			separator := rune(match[1][0])
@@ -138,7 +137,6 @@ func (r *Repository) DetectFormatAndSeparator(firstLine string) (FileConfig, err
 			fmt.Println("TXT Separator: ", string(separator))
 			return FileConfig{Format: "txt", Separator: separator}, nil
 		}
-		return FileConfig{Format: "txt", Separator: 0}, nil
 	}
 
 	return FileConfig{}, fmt.Errorf("detectFormatAndSeparator - It was not possible to determine the file format")

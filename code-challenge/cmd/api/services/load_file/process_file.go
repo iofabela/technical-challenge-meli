@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/iofabela/technical-challenge-meli/cmd/api/infrastructure/rest"
@@ -33,10 +34,13 @@ func (r *Repository) DetectFileType(filename string) string {
 	// Validar con las expresiones regulares
 	switch {
 	case csvRegex.MatchString(filename):
+		r.FileConfig.Format = "csv"
 		return "csv"
 	case txtRegex.MatchString(filename):
+		r.FileConfig.Format = "txt"
 		return "txt"
 	case jsonlRegex.MatchString(filename):
+		r.FileConfig.Format = "jsonl"
 		return "jsonl"
 	default:
 		return "unknown"
@@ -71,6 +75,7 @@ func (r *Repository) processCSV(ctx *gin.Context, file multipart.File) error {
 		return fmt.Errorf("error detecting CSV format: %v", err)
 	}
 
+	var wg sync.WaitGroup
 	for { // Read the file line by line
 		sliceLine, err := reader.Read()
 		if err != nil {
@@ -78,19 +83,22 @@ func (r *Repository) processCSV(ctx *gin.Context, file multipart.File) error {
 				break
 			}
 			web.Error(ctx, http.StatusInternalServerError, "Error to read process line")
-			return fmt.Errorf("Error to read process line: %w", err) // TODO save the line with error in a file
+			return fmt.Errorf("Error to read process line: %w", err)
 		}
-		line := strings.Join(sliceLine, ",")
-
-		if itemFailed := r.ProcessLine(line); itemFailed.Error != nil { // TODO save the line with error in a file
-
-			if r.isCriticalError(itemFailed.Error) {
-				web.Error(ctx, http.StatusInternalServerError, "Error to read process line in CSV")
-				return fmt.Errorf("processFile.CSV - Internal error to read process line: %s", itemFailed.Error.Error())
+		wg.Add(1)
+		go func(sliceLine []string) {
+			defer wg.Done()
+			line := strings.Join(sliceLine, ",")
+			if itemFailed := r.ProcessLine(line); itemFailed.Error != nil {
+				if r.isCriticalError(itemFailed.Error) {
+					web.Error(ctx, http.StatusInternalServerError, "Error to read process line in CSV - %s", line)
+					// return fmt.Errorf("processFile.CSV - Internal error to read process line: %s", itemFailed.Error.Error())
+				}
+				Reprocess(itemFailed)
 			}
-			Reprocess(itemFailed)
-		}
+		}(sliceLine)
 	}
+	wg.Wait()
 	return nil
 }
 
@@ -106,32 +114,42 @@ func (r *Repository) processTXT(ctx *gin.Context, file *bufio.Scanner) error {
 		return fmt.Errorf("error detecting TXT format: %v", err)
 	}
 
+	var wg sync.WaitGroup
 	for file.Scan() { // Read the file line by line
 		line := file.Text()
-		if itemFailed := r.ProcessLine(line); itemFailed.Error != nil && itemFailed.Error != io.EOF {
-
-			if r.isCriticalError(itemFailed.Error) {
-				web.Error(ctx, http.StatusInternalServerError, "Error to read process line in TXT")
-				return fmt.Errorf("processFile.TXT - Internal error to read process line: %s", itemFailed.Error.Error())
+		wg.Add(1)
+		go func(line string) {
+			defer wg.Done()
+			if itemFailed := r.ProcessLine(line); itemFailed.Error != nil && itemFailed.Error != io.EOF {
+				if r.isCriticalError(itemFailed.Error) {
+					web.Error(ctx, http.StatusInternalServerError, "Error to read process line in TXT - %s", line)
+					// return fmt.Errorf("processFile.TXT - Internal error to read process line: %s", itemFailed.Error.Error())
+				}
+				Reprocess(itemFailed)
 			}
-			Reprocess(itemFailed)
-		}
+		}(line)
 	}
+	wg.Wait()
 	return nil
 }
 func (r *Repository) processJSONLiner(ctx *gin.Context, file *bufio.Scanner) error {
 
+	var wg sync.WaitGroup
 	for file.Scan() { // Read the file line by line
 		line := file.Text()
-		if itemFailed := r.ProcessJson(line); itemFailed.Error != nil && itemFailed.Error != io.EOF {
-			if r.isCriticalError(itemFailed.Error) {
-				web.Error(ctx, http.StatusInternalServerError, "Error to read process line in JSON")
-				return fmt.Errorf("processFile.JSON - Internal error to read process line: %s", itemFailed.Error.Error())
+		wg.Add(1)
+		go func(line string) {
+			defer wg.Done()
+			if itemFailed := r.ProcessJson(line); itemFailed.Error != nil && itemFailed.Error != io.EOF {
+				if r.isCriticalError(itemFailed.Error) {
+					web.Error(ctx, http.StatusInternalServerError, "Error to read process line in JSON")
+					// return fmt.Errorf("processFile.JSON - Internal error to read process line: %s", itemFailed.Error.Error())
+				}
+				Reprocess(itemFailed)
 			}
-			Reprocess(itemFailed)
-		}
+		}(line)
+		wg.Wait()
 	}
-
 	return nil
 }
 
@@ -150,7 +168,6 @@ func (r *Repository) ProcessLine(line string) *items.FailedItem {
 			Error: err,
 		}
 	}
-	fmt.Println("Item: ", item) // TODO remove
 	return &items.FailedItem{}
 }
 
@@ -175,7 +192,6 @@ func (r *Repository) ProcessJson(line string) *items.FailedItem {
 		}
 	}
 
-	fmt.Println("Item: ", item) // TODO remove
 	return &items.FailedItem{}
 }
 
