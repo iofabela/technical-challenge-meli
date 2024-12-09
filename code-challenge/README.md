@@ -92,6 +92,7 @@ make stop
 
 > [!TIP]  
 > Se puede abrir el archivo `makefile` para ver los comandos que se utlizaron.
+> El PATH de la documentación se puede ver en el archivo `docs/guide/`.
 
 ## Paquetes y librerías
 
