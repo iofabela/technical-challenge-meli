@@ -6,6 +6,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/iofabela/technical-challenge-meli/cmd/api/handler"
 	"github.com/iofabela/technical-challenge-meli/cmd/api/services/load_file"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/swaggo/swag/example/basic/docs"
 )
 
 func (r *Router) setGroup() {
@@ -24,6 +27,12 @@ func (r *Router) buildLoadFileRoute() {
 	handler := handler.NewLoadFile(service)
 	loadFileRoute := r.rg.Group("/")
 	{
-		loadFileRoute.POST("/load_file", handler.GetLoadData())
+		loadFileRoute.POST("/load_file", handler.LoadData())
 	}
+}
+
+func (r *Router) buildSwaggerRoutes() {
+	// docs.SwaggerInfo.Host = "localhost:8080"
+	docs.SwaggerInfo.BasePath = "/api/v1"
+	r.rg.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 }

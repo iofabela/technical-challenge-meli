@@ -2,7 +2,6 @@ package handler
 
 import (
 	"fmt"
-	"mime/multipart"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -15,10 +14,6 @@ type LoadFile struct {
 	loadFileService load_file.Service
 }
 
-type file struct {
-	FileContent *multipart.FileHeader `binding:"required"`
-}
-
 // NewLoadFile Handler
 func NewLoadFile(l load_file.Service) *LoadFile {
 	return &LoadFile{
@@ -26,7 +21,18 @@ func NewLoadFile(l load_file.Service) *LoadFile {
 	}
 }
 
-func (l *LoadFile) GetLoadData() gin.HandlerFunc {
+// GetLoadData …
+// @Summary Load File by a request form and save it in the database SQLite
+// @Description Load File by a request form and save it in the database SQLite
+// @Tags LoadFile
+// @Accept multipart/form-data
+// @Produce json
+// @Param file formData file true "File to be loaded"
+// @Success 200 {object} web.response
+// @Failure 400 {object} web.errorResponse
+// @Failure 500 {object} web.errorResponse
+// @Router /load-file [post]
+func (l *LoadFile) LoadData() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
 		// Get the file from the form

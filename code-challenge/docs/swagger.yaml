@@ -1,0 +1,59 @@
+basePath: /api/v1
+definitions:
+  web.errorResponse:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+  web.response:
+    properties:
+      data: {}
+    type: object
+host: localhost:8080
+info:
+  contact:
+    name: API Support
+    url: https://developers.mercadolibre.com.ar/support
+  description: This API Handle MELI Products.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: https://developers.mercadolibre.com.ar/es_ar/terminos-y-condiciones
+  title: MELI CHALLENGE API
+  version: 1.0.0
+paths:
+  /load-file:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Load File by a request form and save it in the database SQLite
+      parameters:
+      - description: File to be loaded
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/web.response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.errorResponse'
+      summary: Load File by a request form and save it in the database SQLite
+      tags:
+      - LoadFile
+schemes:
+- http
+- https
+swagger: "2.0"
