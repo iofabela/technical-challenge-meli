@@ -1,87 +1,78 @@
 {
-    "schemes": [
-        "http",
-        "https"
-    ],
-    "swagger": "2.0",
-    "info": {
-        "description": "This API Handle MELI Products.",
-        "title": "MELI CHALLENGE API",
-        "termsOfService": "https://developers.mercadolibre.com.ar/es_ar/terminos-y-condiciones",
-        "contact": {
-            "name": "API Support",
-            "url": "https://developers.mercadolibre.com.ar/support"
-        },
-        "license": {
-            "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
-        },
-        "version": "1.0.0"
+  "schemes": ["http", "https"],
+  "swagger": "2.0",
+  "info": {
+    "description": "This API Handle MELI Products.",
+    "title": "MELI CHALLENGE API",
+    "termsOfService": "https://developers.mercadolibre.com.ar/es_ar/terminos-y-condiciones",
+    "contact": {
+      "name": "API Support",
+      "url": "https://developers.mercadolibre.com.ar/support"
     },
-    "host": "localhost:8080",
-    "paths": {
-        "/load-file": {
-            "post": {
-                "description": "Load File by a request form and save it in the database SQLite",
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "LoadFile"
-                ],
-                "summary": "Load File by a request form and save it in the database SQLite",
-                "parameters": [
-                    {
-                        "type": "file",
-                        "description": "File to be loaded",
-                        "name": "file",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/web.response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/web.errorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/web.errorResponse"
-                        }
-                    }
-                }
-            }
-        }
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
     },
-    "definitions": {
-        "web.errorResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "string"
-                },
-                "message": {
-                    "type": "string"
-                }
+    "version": "1.0.0"
+  },
+  "host": "localhost:8080",
+  "paths": {
+    "/local/api/load-file": {
+      "post": {
+        "description": "Load File by a request form and save it in the database SQLite",
+        "consumes": ["multipart/form-data"],
+        "produces": ["application/json"],
+        "tags": ["LoadFile"],
+        "summary": "Load File by a request form and save it in the database SQLite",
+        "parameters": [
+          {
+            "type": "file",
+            "description": "File to be loaded",
+            "name": "file",
+            "in": "form",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/web.response"
             }
-        },
-        "web.response": {
-            "type": "object",
-            "properties": {
-                "data": {}
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/web.errorResponse"
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/web.errorResponse"
+            }
+          }
         }
+      }
     }
+  },
+  "definitions": {
+    "web.errorResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "web.response": {
+      "type": "object",
+      "properties": {
+        "data": {}
+      }
+    }
+  }
 }

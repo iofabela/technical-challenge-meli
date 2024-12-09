@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -27,14 +28,14 @@ func NewLoadFile(l load_file.Service) *LoadFile {
 // @Tags LoadFile
 // @Accept multipart/form-data
 // @Produce json
-// @Param file formData file true "File to be loaded"
+// @Param file formData file  true "File to be loaded"
 // @Success 200 {object} web.response
 // @Failure 400 {object} web.errorResponse
 // @Failure 500 {object} web.errorResponse
-// @Router /load-file [post]
+// @Router /local/api/load_file [post]
 func (l *LoadFile) LoadData() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-
+		log.Printf("Path: %s, Method: %s", ctx.Request.URL.Path, ctx.Request.Method)
 		// Get the file from the form
 		file, err := ctx.FormFile("file")
 		if err != nil {

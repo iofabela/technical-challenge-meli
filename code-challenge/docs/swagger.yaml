@@ -23,7 +23,7 @@ info:
   title: MELI CHALLENGE API
   version: 1.0.0
 paths:
-  /load-file:
+  /local/api/load-file:
     post:
       consumes:
       - multipart/form-data

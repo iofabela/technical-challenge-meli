@@ -14,7 +14,7 @@ servers:
 - url: http://localhost:8080/
 - url: https://localhost:8080/
 paths:
-  /load-file:
+  /local/api/load-file:
     post:
       tags:
       - LoadFile

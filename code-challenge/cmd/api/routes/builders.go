@@ -3,7 +3,7 @@ package routes
 import (
 	"net/http"
 
-	_ "github.com/iofabela/technical-challenge-meli/docs"
+	_ "github.com/iofabela/technical-challenge-meli/docs/guide"
 
 	"github.com/gin-gonic/gin"
 	"github.com/iofabela/technical-challenge-meli/cmd/api/handler"
