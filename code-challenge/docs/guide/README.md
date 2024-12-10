@@ -64,7 +64,7 @@ make run
 <details>
   <summary>&emsp;<b>Sin permisos o acceso denegado al archivo</b></summary>
   <p>Para correr el proyecto, ejecute el siguiente comando:</p>
-  <pre><code>docker run -p 8080:8080 -v $(pwd)/items.db:/app/items.db gin-sqlite-app; open http://localhost:8080/docs/index.html</code></pre>
+  <pre><code>docker run -p 8080:8080 -v $(pwd)/items.db:/app/items.db gin-sqlite-app & open http://localhost:8080/docs/index.html</code></pre>
 </details><br>
 
 - Al ejecutar el comando se correrá el contenedor con la imagen de Docker construida previamente. Y se abrirá (en el navegador por defecto) el <u>swagger</u> con los campos para realizar la consulta.
