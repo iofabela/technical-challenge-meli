@@ -3,6 +3,7 @@ package internal_sql
 import (
 	"database/sql"
 	"fmt"
+	"sync"
 
 	"github.com/iofabela/technical-challenge-meli/cmd/api/models/items"
 	_ "github.com/mattn/go-sqlite3"
@@ -17,6 +18,8 @@ func NewSQL(db *sql.DB) *SQL {
 		DB: db,
 	}
 }
+
+var dbMutex sync.Mutex
 
 func Connect(database string) (*sql.DB, error) {
 	db, err := sql.Open("sqlite3", "./"+database)
@@ -47,7 +50,8 @@ func Connect(database string) (*sql.DB, error) {
 }
 
 func (s *SQL) SaveItem(item *items.SaveItem) error {
-
+	dbMutex.Lock()
+	defer dbMutex.Unlock()
 	_, err := s.DB.
 		Exec("INSERT INTO items ( id, site, price, start_time, name, description, nickname) VALUES (?, ?, ?, ?, ?, ?, ?)",
 			item.ID, item.SiteID, item.Price, item.StartTime, item.Name, item.Description, item.Nickname)
