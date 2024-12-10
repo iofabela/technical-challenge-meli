@@ -69,6 +69,11 @@ make run
 
 - Al ejecutar el comando se correrá el contenedor con la imagen de Docker construida previamente. Y se abrirá (en el navegador por defecto) el <u>swagger</u> con los campos para realizar la consulta.
 
+- El swagger se puede acceder en el siguiente enlace, si no se encuentra, abra el navegador en la siguiente dirección:
+<pre><a href="http://localhost:8080/docs/index.html">http://localhost:8080/docs/index.html</a></pre>
+
+- Dentro del swagger, acceda al endpoint `/load_file` y realice la petición. Con el Try it out, se puede realizar la consulta.
+
 <details>
   <summary>&emsp;<b>En caso de que lo requiera puede usar - CURL</b></summary>
   <pre><code>curl --location 'localhost:8080/ping' \
