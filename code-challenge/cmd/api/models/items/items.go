@@ -1,18 +1,16 @@
 package items
 
-import "fmt"
-
 type DataLine struct {
 	Site string `json:"site" binding:"required"`
 	ID   int    `json:"id" binding:"required"`
 }
 
 type Item struct {
-	Price      float64 `json:"price" binding:"required"`
-	StartTime  string  `json:"date_created" binding:"required"`
-	CategoryID string  `json:"category_id" binding:"required"`
-	CurrencyID string  `json:"currency_id" binding:"required"`
-	SellerID   int     `json:"seller_id" binding:"required"`
+	Price      float64 `json:"price"`
+	StartTime  string  `json:"date_created"`
+	CategoryID string  `json:"category_id"`
+	CurrencyID string  `json:"currency_id"`
+	SellerID   int     `json:"seller_id"`
 }
 
 type Categories struct {
@@ -37,24 +35,23 @@ type SaveItem struct {
 	Nickname    string  `json:"nickname"`
 }
 
-func (i Item) Validate() []error {
-
-	errors := []error{}
+func (i SaveItem) Validate() SaveItem {
 
 	if i.Price <= 0 {
-		errors = append(errors, fmt.Errorf("\n*price* must be greater than 0"))
+		i.Price = 0
 	}
 	if i.StartTime == "" {
-		errors = append(errors, fmt.Errorf("\n*start_time* must be not empty"))
+		i.StartTime = "2023-01-01T00:00:00Z"
 	}
-	if i.CategoryID == "" {
-		errors = append(errors, fmt.Errorf("\n*category_id* must be not empty"))
+	if i.Description == "" {
+		i.Description = "No description"
 	}
-	if i.CurrencyID == "" {
-		errors = append(errors, fmt.Errorf("\n*currency_id* must be not empty"))
+	if i.Nickname == "" {
+		i.Nickname = "No nickname"
 	}
-	if i.SellerID == 0 {
-		errors = append(errors, fmt.Errorf("\n*seller_id* must be not empty"))
+	if i.Name == "" {
+		i.Name = "No name"
 	}
-	return errors
+
+	return i
 }

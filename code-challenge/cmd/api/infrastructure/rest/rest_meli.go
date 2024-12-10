@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/iofabela/technical-challenge-meli/cmd/api/models/items"
 )
@@ -37,10 +38,11 @@ func NewClient(baseURL string, endpoints Endpoints) *Client {
 func RestMeli_Items(site string, id string, client *Client) (*items.SaveItem, *items.FailedItem) {
 
 	var (
-		item     items.Item
-		category items.Categories
-		currency items.Currencies
-		seller   items.Sellers
+		item         items.Item
+		category     items.Categories
+		currency     items.Currencies
+		seller       items.Sellers
+		errorsValues []string
 	)
 	// ITEM
 	respItem, errRespItem := http.Get(client.BaseURL + client.Endpoints.Items_price + site + id)
@@ -54,7 +56,8 @@ func RestMeli_Items(site string, id string, client *Client) (*items.SaveItem, *i
 	}
 	// Parsear el JSON
 	if errJsonItem := json.NewDecoder(respItem.Body).Decode(&item); errJsonItem != nil {
-		return nil, &items.FailedItem{ID: id, Site: site, Response: respItem, Error: fmt.Errorf("RestMeli_Items - Item:Error parsing JSON: %v", errJsonItem.Error())}
+		// return nil, &items.FailedItem{ID: id, Site: site, Response: respItem, Error: fmt.Errorf("RestMeli_Items - Item:Error parsing JSON: %v", errJsonItem.Error())}
+		errorsValues = append(errorsValues, fmt.Sprintf("RestMeli_Items with %s%s - Item:Error parsing JSON", site, id))
 	}
 
 	// CATEGORY
@@ -64,11 +67,15 @@ func RestMeli_Items(site string, id string, client *Client) (*items.SaveItem, *i
 	}
 	defer respCategory.Body.Close()
 	if respCategory.StatusCode != http.StatusOK {
-		return nil, &items.FailedItem{ID: id, Site: site, Response: respCategory, Error: fmt.Errorf("RestMeli_Items - Category:Status - %d", respCategory.StatusCode)}
+		// return nil, &items.FailedItem{ID: id, Site: site, Response: respCategory, Error: fmt.Errorf("RestMeli_Items - Category:Status - %d", respCategory.StatusCode)}
+		// fmt.Printf("RestMeli_Items - Category:Status - %d\n", respCategory.StatusCode)
+		errorsValues = append(errorsValues, fmt.Sprintf("RestMeli_Items with ID %s%s - Category:Status - %d", site, id, respCategory.StatusCode))
 	}
 	// Parsear el JSON
 	if errJsonCategory := json.NewDecoder(respCategory.Body).Decode(&category); errJsonCategory != nil {
-		return nil, &items.FailedItem{ID: id, Site: site, Response: respCategory, Error: fmt.Errorf("RestMeli_Items - Category:Error parsing JSON: %v", errJsonCategory.Error())}
+		// return nil, &items.FailedItem{ID: id, Site: site, Response: respCategory, Error: fmt.Errorf("RestMeli_Items - Category:Error parsing JSON: %v", errJsonCategory.Error())}
+		// fmt.Printf("RestMeli_Items - Category:Error parsing JSON: %s\n", errJsonCategory.Error())
+		errorsValues = append(errorsValues, fmt.Sprintf("RestMeli_Items with ID %s%s - Category:Error parsing JSON", site, id))
 	}
 
 	// CURRENCY
@@ -78,11 +85,15 @@ func RestMeli_Items(site string, id string, client *Client) (*items.SaveItem, *i
 	}
 	defer respCurrency.Body.Close()
 	if respCurrency.StatusCode != http.StatusOK {
-		return nil, &items.FailedItem{ID: id, Site: site, Response: respCurrency, Error: fmt.Errorf("RestMeli_Items - Currency:Status - %d", respCurrency.StatusCode)}
+		// return nil, &items.FailedItem{ID: id, Site: site, Response: respCurrency, Error: fmt.Errorf("RestMeli_Items - Currency:Status - %d", respCurrency.StatusCode)}
+		// fmt.Printf("RestMeli_Items - Currency:Status - %d \n", respCurrency.StatusCode)
+		errorsValues = append(errorsValues, fmt.Sprintf("RestMeli_Items with ID %s%s - Currency:Status - %d", site, id, respCurrency.StatusCode))
 	}
 	// Parsear el JSON
 	if errJsonCurrency := json.NewDecoder(respCurrency.Body).Decode(&currency); errJsonCurrency != nil {
-		return nil, &items.FailedItem{ID: id, Site: site, Response: respCurrency, Error: fmt.Errorf("RestMeli_Items - Currency:Error parsing JSON: %v", errJsonCurrency.Error())}
+		// return nil, &items.FailedItem{ID: id, Site: site, Response: respCurrency, Error: fmt.Errorf("RestMeli_Items - Currency:Error parsing JSON: %v", errJsonCurrency.Error())}
+		// fmt.Printf("RestMeli_Items - Currency:Error parsing JSON: %s\n", errJsonCurrency.Error())
+		errorsValues = append(errorsValues, fmt.Sprintf("RestMeli_Items with ID %s%s - Currency:Error parsing JSON", site, id))
 	}
 
 	// SELLER
@@ -92,13 +103,23 @@ func RestMeli_Items(site string, id string, client *Client) (*items.SaveItem, *i
 	}
 	defer respSeller.Body.Close()
 	if respSeller.StatusCode != http.StatusOK {
-		return nil, &items.FailedItem{ID: id, Site: site, Response: respSeller, Error: fmt.Errorf("RestMeli_Items - Seller:Status - %d", respSeller.StatusCode)}
+		// return nil, &items.FailedItem{ID: id, Site: site, Response: respSeller, Error: fmt.Errorf("RestMeli_Items - Seller:Status - %d", respSeller.StatusCode)}
+		// fmt.Printf("RestMeli_Items - Seller:Status - %d\n", respSeller.StatusCode)
+		errorsValues = append(errorsValues, fmt.Sprintf("RestMeli_Items with ID %s%s - Seller:Status - %d", site, id, respSeller.StatusCode))
 	}
 	// Parsear el JSON
 	if errJsonSeller := json.NewDecoder(respSeller.Body).Decode(&seller); errJsonSeller != nil {
-		return nil, &items.FailedItem{ID: id, Site: site, Response: respSeller, Error: fmt.Errorf("RestMeli_Items - Seller:Error parsing JSON: %v", errJsonSeller.Error())}
+		// return nil, &items.FailedItem{ID: id, Site: site, Response: respSeller, Error: fmt.Errorf("RestMeli_Items - Seller:Error parsing JSON: %v", errJsonSeller.Error())}
+		// fmt.Printf("RestMeli_Items - Seller:Error parsing JSON: %s\n", errJsonSeller.Error())
+		errorsValues = append(errorsValues, fmt.Sprintf("RestMeli_Items with ID %s%s - Seller:Error parsing JSON", site, id))
 	}
-	return &items.SaveItem{
+
+	if len(errorsValues) > 0 {
+		combinedErrors := strings.Join(errorsValues, "; ")
+		fmt.Println(combinedErrors)
+	}
+
+	saveItem := items.SaveItem{
 		ID:          id,
 		SiteID:      site,
 		Price:       item.Price,
@@ -106,5 +127,8 @@ func RestMeli_Items(site string, id string, client *Client) (*items.SaveItem, *i
 		Name:        category.Name,
 		Description: currency.Description,
 		Nickname:    seller.Nickname,
-	}, &items.FailedItem{}
+	}
+	saveItem = saveItem.Validate()
+
+	return &saveItem, &items.FailedItem{}
 }
