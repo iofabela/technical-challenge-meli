@@ -50,7 +50,7 @@ Para ejecutar el proyecto, siga los siguientes pasos:
 make start
 ```
 
-- Al momento de ejecutar el comando, se <u>construirá la imagen de Docker</u> (en promedio toma 10s) y se abrirá (en el navegador por defecto) el <u>docsify</u> con estas mismas especificaciones del proyecto en Go.
+- Al momento de ejecutar el comando, se <u>construirá la imagen de Docker</u> (puede demorar, toma 45s) y se abrirá (en el navegador por defecto) el <u>docsify</u> con estas mismas especificaciones del proyecto en Go.
 
 3. Para correr la aplicación, ejecute el siguiente comando:
 

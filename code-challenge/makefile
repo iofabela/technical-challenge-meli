@@ -17,8 +17,7 @@ start:
 
 .PHONY: run # para ejecutar el contenedor
 run:
-	docker run -p 8080:8080 -v $(pwd)/items.db:/app/items.db gin-sqlite-app
-	open http://localhost:8080/docs/index.html
+	docker run -p 8080:8080 -v $(pwd)/items.db:/app/items.db gin-sqlite-app & open http://localhost:8080/docs/index.html
 
 .PHONY: get-data-sql
 get-data-sql:
