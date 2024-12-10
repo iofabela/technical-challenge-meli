@@ -50,7 +50,7 @@ Para ejecutar el proyecto, siga los siguientes pasos:
 make start
 ```
 
-- Al momento de ejecutar el comando, se <u>construirá la imagen de Docker</u> (en promedio toma 10s) y se abrirá (en el navegador por defecto) el <u>docsify</u> con estas mismas especificaciones del proyecto en Go.
+- Al momento de ejecutar el comando, se <u>construirá la imagen de Docker</u> (puede demorar, toma 45s) y se abrirá (en el navegador por defecto) el <u>docsify</u> con estas mismas especificaciones del proyecto en Go.
 
 3. Para correr la aplicación, ejecute el siguiente comando:
 
@@ -68,6 +68,11 @@ make run
 </details><br>
 
 - Al ejecutar el comando se correrá el contenedor con la imagen de Docker construida previamente. Y se abrirá (en el navegador por defecto) el <u>swagger</u> con los campos para realizar la consulta.
+
+- El swagger se puede acceder en el siguiente enlace, si no se encuentra, abra el navegador en la siguiente dirección:
+<pre><a href="http://localhost:8080/docs/index.html">http://localhost:8080/docs/index.html</a></pre>
+
+- Dentro del swagger, acceda al endpoint `/load_file` y realice la petición. Con el Try it out, se puede realizar la consulta.
 
 <details>
   <summary>&emsp;<b>En caso de que lo requiera puede usar - CURL</b></summary>
